@@ -1,22 +1,17 @@
 // index.js
 const express = require("express");
-const fetch = require("node-fetch"); // v2 for CommonJS
+const fetch = require("node-fetch");
 const app = express();
 app.use(express.json());
 
 const API_KEY = process.env.ROBLOX_API_KEY;
-const GROUP_ID = 14890643; // Replace with your group ID
+const GROUP_ID = 14890643;
 
 if (!API_KEY) {
     console.error("ROBLOX_API_KEY not set in environment variables");
     process.exit(1);
 }
 
-app.get("/test", (req, res) => {
-    res.send({ ok: true });
-});
-
-// Helper to get member
 async function getMember(userId) {
     try {
         const res = await fetch(`https://apis.roblox.com/cloud/groups/${GROUP_ID}/memberships?maxPageSize=200`, {
@@ -33,7 +28,6 @@ async function getMember(userId) {
     }
 }
 
-// Helper to get sorted roles
 async function getRoles() {
     try {
         const res = await fetch(`https://apis.roblox.com/cloud/groups/${GROUP_ID}/roles`, {
@@ -48,7 +42,6 @@ async function getRoles() {
     }
 }
 
-// Promote endpoint
 app.post("/promote", async (req, res) => {
     try {
         console.log("Promote request received:", req.body);
@@ -83,7 +76,6 @@ app.post("/promote", async (req, res) => {
     }
 });
 
-// Demote endpoint
 app.post("/demote", async (req, res) => {
     try {
         console.log("Demote request received:", req.body);
