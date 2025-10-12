@@ -1,5 +1,5 @@
 const express = require("express");
-const fetch = require("node-fetch"); // install via npm
+const fetch = require("node-fetch"); // v2 supports require
 const app = express();
 app.use(express.json());
 
