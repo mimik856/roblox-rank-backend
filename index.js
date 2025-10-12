@@ -12,6 +12,10 @@ if (!API_KEY) {
     process.exit(1);
 }
 
+app.get("/test", (req, res) => {
+    res.send({ ok: true });
+});
+
 // Helper to get member
 async function getMember(userId) {
     try {
