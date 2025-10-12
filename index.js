@@ -8,6 +8,7 @@ const GROUP_ID = 14890643; // replace with your group
 
 // Promote endpoint
 app.post("/promote", async (req, res) => {
+    console.log("Got promote request");
     const { userId } = req.body;
     if (!userId) return res.status(400).send("Missing userId");
 
