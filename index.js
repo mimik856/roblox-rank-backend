@@ -30,16 +30,16 @@ async function startApp() {
     const apiKey = process.env.API_KEY;
 
     if (!cookie) {
-      console.error("ERROR: cookie environment variable is not set!");
-      console.error(
+      console.warn("ERROR: cookie environment variable is not set!");
+      console.warn(
         'Please add your Roblox .ROBLOSECURITY cookie to Replit Secrets with key "cookie"',
       );
       process.exit(1);
     }
 
     if (!groupIdStr) {
-      console.error("ERROR: GroupId environment variable is not set!");
-      console.error(
+      console.warn("ERROR: GroupId environment variable is not set!");
+      console.warn(
         'Please add your Roblox Group ID to Replit Secrets with key "GroupId"',
       );
       process.exit(1);
@@ -47,17 +47,17 @@ async function startApp() {
 
     const groupId = parseInt(groupIdStr);
     if (isNaN(groupId) || !Number.isInteger(groupId) || groupId <= 0) {
-      console.error("ERROR: GroupId must be a valid positive integer!");
-      console.error(`Current value: "${groupIdStr}"`);
+      console.warn("ERROR: GroupId must be a valid positive integer!");
+      console.warn(`Current value: "${groupIdStr}"`);
       process.exit(1);
     }
 
     if (!apiKey) {
-      console.error("ERROR: API_KEY environment variable is not set!");
-      console.error(
+      console.warn("ERROR: API_KEY environment variable is not set!");
+      console.warn(
         "For security, this server requires an API_KEY to protect rank-changing endpoints.",
       );
-      console.error(
+      console.warn(
         "Please add an API_KEY to Replit Secrets (use a long, random string).",
       );
       process.exit(1);
@@ -71,8 +71,8 @@ async function startApp() {
     console.log(`Managing group: ${groupId}`);
     console.log(`API authentication is enabled and protecting all endpoints`);
   } catch (err) {
-    console.error("Failed to authenticate with Roblox:", err.message);
-    console.error("Please check that your cookie is valid and not expired.");
+    console.warn("Failed to authenticate with Roblox:", err.message);
+    console.warn("Please check that your cookie is valid and not expired.");
     process.exit(1);
   }
 }
@@ -95,7 +95,7 @@ app.post("/promote", authenticateRequest, async (req, res) => {
     console.log(`finished /promote with userId ${userId}`);
     res.status(200).send({ Success: true });
   } catch (err) {
-    console.error(`Promote error for user ${userId}:`, err.message);
+    console.warn(`Promote error for user ${userId}:`, err.message);
     res.status(500).send({ Success: false, Errors: err.message });
   }
 });
@@ -118,7 +118,7 @@ app.post("/demote", authenticateRequest, async (req, res) => {
     console.log(`finished /demote with userId ${userId}`);
     res.status(200).send({ Success: true });
   } catch (err) {
-    console.error(`Demote error for user ${userId}:`, err.message);
+    console.warn(`Demote error for user ${userId}:`, err.message);
     res.status(500).send({ Success: false, Errors: err.message });
   }
 });
