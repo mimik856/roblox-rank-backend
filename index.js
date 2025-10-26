@@ -17,7 +17,7 @@ function authenticateRequest(req, res, next) {
   if (!apiKey || apiKey !== validApiKey) {
     return res
       .status(401)
-      .send({ Success: false, Errors: "Invalid or missing API key" });
+      .send({ Success: false, Errors: "invalid or missing API key" });
   }
 
   next();
@@ -31,17 +31,11 @@ async function startApp() {
 
     if (!cookie) {
       console.warn("ERROR: cookie environment variable is not set!");
-      console.warn(
-        'Please add your Roblox .ROBLOSECURITY cookie to Replit Secrets with key "cookie"',
-      );
       process.exit(1);
     }
 
     if (!groupIdStr) {
       console.warn("ERROR: GroupId environment variable is not set!");
-      console.warn(
-        'Please add your Roblox Group ID to Replit Secrets with key "GroupId"',
-      );
       process.exit(1);
     }
 
@@ -54,20 +48,12 @@ async function startApp() {
 
     if (!apiKey) {
       console.warn("ERROR: API_KEY environment variable is not set!");
-      console.warn(
-        "For security, this server requires an API_KEY to protect rank-changing endpoints.",
-      );
-      console.warn(
-        "Please add an API_KEY to Replit Secrets (use a long, random string).",
-      );
       process.exit(1);
     }
 
     await noblox.setCookie(cookie);
     const currentUser = await noblox.getAuthenticatedUser();
-    console.log(
-      `Successfully logged in as: ${currentUser.name} (${currentUser.id})`,
-    );
+    console.log(`Successfully logged in as: ${currentUser.name} (${currentUser.id})`,);
     console.log(`Managing group: ${groupId}`);
     console.log(`API authentication is enabled and protecting all endpoints`);
   } catch (err) {
@@ -87,7 +73,7 @@ app.post("/promote", authenticateRequest, async (req, res) => {
     if (isNaN(userId) || !Number.isInteger(userId) || userId <= 0) {
       return res.status(400).send({
         Success: false,
-        Errors: "Valid userID (positive integer) is required in request body",
+        Errors: "provide a valid userId (positive int)",
       });
     }
 
@@ -95,7 +81,7 @@ app.post("/promote", authenticateRequest, async (req, res) => {
     console.log(`finished /promote with userId ${userId}`);
     res.status(200).send({ Success: true });
   } catch (err) {
-    console.warn(`Promote error for user ${userId}:`, err.message);
+    console.warn(`promote error for user ${userId}:`, err.message);
     res.status(500).send({ Success: false, Errors: err.message });
   }
 });
@@ -110,7 +96,7 @@ app.post("/demote", authenticateRequest, async (req, res) => {
     if (isNaN(userId) || !Number.isInteger(userId) || userId <= 0) {
       return res.status(400).send({
         Success: false,
-        Errors: "Valid userID (positive integer) is required in request body",
+        Errors: "provide a valid userId (positive int)",
       });
     }
 
@@ -118,7 +104,7 @@ app.post("/demote", authenticateRequest, async (req, res) => {
     console.log(`finished /demote with userId ${userId}`);
     res.status(200).send({ Success: true });
   } catch (err) {
-    console.warn(`Demote error for user ${userId}:`, err.message);
+    console.warn(`demote error for user ${userId}:`, err.message);
     res.status(500).send({ Success: false, Errors: err.message });
   }
 });
