@@ -81,6 +81,8 @@ app.post("/promote", authenticateRequest, async (req, res) => {
   const userId = parseInt(req.body.userID);
   const groupId = parseInt(process.env.GroupId);
 
+  console.log(`request on /promote with userId ${userId}`);
+  
   try {
     if (isNaN(userId) || !Number.isInteger(userId) || userId <= 0) {
       return res.status(400).send({
@@ -90,6 +92,7 @@ app.post("/promote", authenticateRequest, async (req, res) => {
     }
 
     await noblox.promote(groupId, userId);
+    console.log(`finished /promote with userId ${userId}`);
     res.status(200).send({ Success: true });
   } catch (err) {
     console.error(`Promote error for user ${userId}:`, err.message);
@@ -101,6 +104,8 @@ app.post("/demote", authenticateRequest, async (req, res) => {
   const userId = parseInt(req.body.userID);
   const groupId = parseInt(process.env.GroupId);
 
+  console.log(`request on /demote with userId ${userId}`);
+  
   try {
     if (isNaN(userId) || !Number.isInteger(userId) || userId <= 0) {
       return res.status(400).send({
@@ -110,6 +115,7 @@ app.post("/demote", authenticateRequest, async (req, res) => {
     }
 
     await noblox.demote(groupId, userId);
+    console.log(`finished /demote with userId ${userId}`);
     res.status(200).send({ Success: true });
   } catch (err) {
     console.error(`Demote error for user ${userId}:`, err.message);
