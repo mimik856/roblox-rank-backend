@@ -1,114 +1,133 @@
-// index.js
 const express = require("express");
-const fetch = require("node-fetch");
+const bodyParser = require("body-parser");
+const noblox = require("noblox.js");
+
 const app = express();
-app.use(express.json());
+const PORT = process.env.PORT || 5000;
 
-const API_KEY = process.env.ROBLOX_API_KEY;
-const GROUP_ID = 14890643;
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-if (!API_KEY) {
-    console.error("ROBLOX_API_KEY not set in environment variables");
+noblox.setOptions({ show_deprecation_warnings: false });
+
+function authenticateRequest(req, res, next) {
+  const apiKey = req.headers["x-api-key"] || req.headers["authorization"];
+  const validApiKey = process.env.API_KEY;
+
+  if (!apiKey || apiKey !== validApiKey) {
+    return res
+      .status(401)
+      .send({ Success: false, Errors: "Invalid or missing API key" });
+  }
+
+  next();
+}
+
+async function startApp() {
+  try {
+    const cookie = process.env.cookie;
+    const groupIdStr = process.env.GroupId;
+    const apiKey = process.env.API_KEY;
+
+    if (!cookie) {
+      console.error("ERROR: cookie environment variable is not set!");
+      console.error(
+        'Please add your Roblox .ROBLOSECURITY cookie to Replit Secrets with key "cookie"',
+      );
+      process.exit(1);
+    }
+
+    if (!groupIdStr) {
+      console.error("ERROR: GroupId environment variable is not set!");
+      console.error(
+        'Please add your Roblox Group ID to Replit Secrets with key "GroupId"',
+      );
+      process.exit(1);
+    }
+
+    const groupId = parseInt(groupIdStr);
+    if (isNaN(groupId) || !Number.isInteger(groupId) || groupId <= 0) {
+      console.error("ERROR: GroupId must be a valid positive integer!");
+      console.error(`Current value: "${groupIdStr}"`);
+      process.exit(1);
+    }
+
+    if (!apiKey) {
+      console.error("ERROR: API_KEY environment variable is not set!");
+      console.error(
+        "For security, this server requires an API_KEY to protect rank-changing endpoints.",
+      );
+      console.error(
+        "Please add an API_KEY to Replit Secrets (use a long, random string).",
+      );
+      process.exit(1);
+    }
+
+    await noblox.setCookie(cookie);
+    const currentUser = await noblox.getAuthenticatedUser();
+    console.log(
+      `Successfully logged in as: ${currentUser.name} (${currentUser.id})`,
+    );
+    console.log(`Managing group: ${groupId}`);
+    console.log(`API authentication is enabled and protecting all endpoints`);
+  } catch (err) {
+    console.error("Failed to authenticate with Roblox:", err.message);
+    console.error("Please check that your cookie is valid and not expired.");
     process.exit(1);
+  }
 }
 
-async function getMember(userId) {
-    try {
-        const res = await fetch(`https://apis.roblox.com/cloud/groups/${GROUP_ID}/memberships?maxPageSize=200`, {
-            headers: { "x-api-key": API_KEY }
-        });
-        const data = await res.json();
-        console.log("Members API response:", data);
+app.post("/promote", authenticateRequest, async (req, res) => {
+  const userId = parseInt(req.body.userID);
+  const groupId = parseInt(process.env.GroupId);
 
-        if (!data.groupMemberships) return null;
-        return data.groupMemberships.find(m => m.user.id == userId);
-    } catch (err) {
-        console.error("Error fetching members:", err);
-        return null;
+  try {
+    if (isNaN(userId) || !Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).send({
+        Success: false,
+        Errors: "Valid userID (positive integer) is required in request body",
+      });
     }
-}
 
-async function getRoles() {
-    try {
-        const res = await fetch(`https://apis.roblox.com/cloud/groups/${GROUP_ID}/roles`, {
-            headers: { "x-api-key": API_KEY }
-        });
-        const data = await res.json();
-        if (!data.roles) return [];
-        return data.roles.sort((a, b) => a.rank - b.rank);
-    } catch (err) {
-        console.error("Error fetching roles:", err);
-        return [];
-    }
-}
-
-app.post("/promote", async (req, res) => {
-    try {
-        console.log("Promote request received:", req.body);
-        const { userId } = req.body;
-        if (!userId) return res.status(400).send({ error: "Missing userId" });
-
-        const member = await getMember(userId);
-        if (!member) return res.status(404).send({ error: "User not found in group or API key invalid" });
-
-        const roles = await getRoles();
-        const currentIndex = roles.findIndex(r => r.id === member.role.id);
-        if (currentIndex === -1) return res.status(500).send({ error: "Current role not found in roles list" });
-
-        const nextRole = roles[currentIndex + 1];
-        if (!nextRole) return res.status(400).send({ error: "Already highest rank" });
-
-        const membershipId = member.path.split("/").pop();
-        const patchRes = await fetch(`https://apis.roblox.com/cloud/groups/${GROUP_ID}/memberships/${membershipId}`, {
-            method: "PATCH",
-            headers: {
-                "x-api-key": API_KEY,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ roleId: nextRole.id })
-        });
-        const patchData = await patchRes.json();
-        res.send({ success: true, data: patchData });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).send({ error: err.message });
-    }
+    await noblox.promote(groupId, userId);
+    res.status(200).send({ Success: true });
+  } catch (err) {
+    console.error(`Promote error for user ${userId}:`, err.message);
+    res.status(500).send({ Success: false, Errors: err.message });
+  }
 });
 
-app.post("/demote", async (req, res) => {
-    try {
-        console.log("Demote request received:", req.body);
-        const { userId } = req.body;
-        if (!userId) return res.status(400).send({ error: "Missing userId" });
+app.post("/demote", authenticateRequest, async (req, res) => {
+  const userId = parseInt(req.body.userID);
+  const groupId = parseInt(process.env.GroupId);
 
-        const member = await getMember(userId);
-        if (!member) return res.status(404).send({ error: "User not found in group or API key invalid" });
-
-        const roles = await getRoles();
-        const currentIndex = roles.findIndex(r => r.id === member.role.id);
-        if (currentIndex === -1) return res.status(500).send({ error: "Current role not found in roles list" });
-
-        const prevRole = roles[currentIndex - 1];
-        if (!prevRole) return res.status(400).send({ error: "Already lowest rank" });
-
-        const membershipId = member.path.split("/").pop();
-        const patchRes = await fetch(`https://apis.roblox.com/cloud/groups/${GROUP_ID}/memberships/${membershipId}`, {
-            method: "PATCH",
-            headers: {
-                "x-api-key": API_KEY,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ roleId: prevRole.id })
-        });
-        const patchData = await patchRes.json();
-        res.send({ success: true, data: patchData });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).send({ error: err.message });
+  try {
+    if (isNaN(userId) || !Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).send({
+        Success: false,
+        Errors: "Valid userID (positive integer) is required in request body",
+      });
     }
+
+    await noblox.demote(groupId, userId);
+    res.status(200).send({ Success: true });
+  } catch (err) {
+    console.error(`Demote error for user ${userId}:`, err.message);
+    res.status(500).send({ Success: false, Errors: err.message });
+  }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.get("/", (req, res) => {
+  res.send({
+    status: "Roblox Group Ranker API is running",
+    endpoints: {
+      "/promote": "POST with { userID: number }",
+      "/demote": "POST with { userID: number }",
+    },
+  });
+});
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server is running on port ${PORT}`);
+  startApp();
+});
