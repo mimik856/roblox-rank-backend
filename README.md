@@ -1,3 +1,4 @@
+(retired)
 # Roblox Group Ranker API
 
 A simple Express + Noblox.js API for managing ranks in a Roblox group (sends a request from inside the game to a [render](https://render.com) and does the logic defined in the `index.js` script :)      
